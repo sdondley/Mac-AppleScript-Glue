@@ -1,1 +1,368 @@
-Initial commit
+# NAME
+
+Mac::AppleScript::Glue - allows AppleScript to be written in Perl
+
+# VERSION
+
+version 0.04
+
+# SYNOPSIS
+
+    use Mac::AppleScript::Glue;
+
+    my $finder = new Mac::AppleScript::Glue::Application('Finder');
+
+    $finder->insertion_location->open;
+
+# DESCRIPTION
+
+This module allows you to write Perl code in object-oriented syntax to
+control Mac applications.  The module does not actually execute Apple
+Events, but actually translates Perl code to AppleScript code and
+causes it to be executed.
+
+## Quick start
+
+The following AppleScript opens the "current" folder in the Finder:
+
+    tell application "Finder"
+        open insertion location
+    end tell
+
+To do this in Perl, you first include the module:
+
+    use Mac::AppleScript::Glue;
+
+Then you create an object you'll use to talk to the Finder application:
+
+    my $finder = new Mac::AppleScript::Glue::Application('Finder');
+
+And finally you issue the compound statement:
+
+    # open the Finder's "insertion location" in a new window
+    $finder->insertion_location->open;
+
+You can save the result of a statement:
+
+    # get the Finder's "insertion location"
+    my $loc = $finder->insertion_location;
+
+And if that result is not a scalar, list, or hash (more on this
+later), you can use that result as an object to do further work:
+
+    # now open that in a new window
+    $loc->open;
+
+You can set attributes:
+
+    my $folder = $finder->make_new_folder;
+
+    $folder->set(name => 'My folder');
+
+If you need to get a particular element of an object, put the
+identifier as an argument to the thing that names the element list:
+
+    my $window = $finder->windows(1);
+
+If you need to specify parameters of a command, use a hash for the
+parameters, where each key/value pair corresponds to a parameter name
+and value:
+
+    my $epson_files = $finder->files(whose_name_contains => 'epson');
+
+You can specify both identifiers and parameters:
+
+    my $epson_files = $finder->files(1, whose_name_contains => 'epson');
+
+Finally, there are cases where you need to create an object reference,
+rather than obtaining one from an application.  To do this, you can
+use an application object to create a
+Mac::AppleScript::Glue::Object(3pm) that refers to both the object
+reference and the application to which that reference should belong:
+
+    my $folder = $finder->objref('folder "Applications"');
+
+Then, you can use that as you normally would:
+
+    # open the "Applications" folder
+    $folder->open;
+
+If you don't need a full-fledged object, you can simply specify a
+parameter of a _reference_ to a scalar containing a string:
+
+    # open the "Applications" folder
+    $finder->open(\'folder "Applications"');
+
+This is also what you should use if you need to pass an AppleScript
+"constant" along:
+
+    $folder->duplicate(replacing => \'true');
+
+But an easier way is to enclose the name of the constant in
+angle-brackets; the module will know to use it verbatim rather than
+trying to quote it:
+
+    $folder->duplicate(replacing => '<true>');
+
+## Return values
+
+If you issue a statement that will return a value, like `insertion
+location`, the result of that statement is always a scalar.  The
+actual contents of this scalar depends on the sort of statement.  It
+will be one of:
+
+- regular scalar
+
+    A number or a string.  This is what you'd expect in Perl -- like 1, or
+    "foo".
+
+- object reference
+
+    An object reference is a textual string that AppleScript uses to
+    describe both the class and context of a "thing".  For example, the
+    `insertion location` statement might return an object reference of:
+
+        folder "Desktop" of folder "johnl" of folder "Users" of startup
+        disk of application "Finder"
+
+    When Mac::AppleScript::Glue(3pm) sees this sort of reference, it puts the
+    whole object reference string into an object of type
+    Mac::AppleScript::Glue::Object(3pm) (see
+    [Mac::AppleScript::Glue::Object](https://metacpan.org/pod/Mac::AppleScript::Glue::Object)).  It also stores in this object the
+    application object that created the object.  By doing this, the
+    Mac::Application::Glue::Object(3pm) can be used by itself to access or
+    modify other data.
+
+- array or hash reference
+
+    If the statement returned an AppleScript "list" or "record", the
+    result will be a Perl array- or hash-reference, respectively.  This
+    could contain simple scalars, or a combination of any of the result
+    types; it can also be nested.
+
+    Note that you'll have to dereference the references to use the
+    elements:
+
+        for my $window (@{ $finder->windows }) {
+            ...
+        }
+
+    or:
+
+        my $props = $finder->properties;
+
+        while (my ($key, $val) = each %{$props}) {
+            ...
+        }
+
+## Notes
+
+For multi-word AppleScript terms like `insertion location`, use the
+underscore character (\_) in place of each space character.
+
+You generally need to reverse the parts of a statement when
+translating AppleScript to Perl.  In AppleScript, `open insertion
+location` really sends the "open" message to the object represented by
+"insertion location".  This maps to the Perl syntax
+`insertion_location->open()`.
+
+Unlike Perl, AppleScript makes a distinction between booleans and
+numbers -- you can't intermix them.  So if an AppleScript method wants
+a boolean as a parameter, you _must_ use the AppleScript constants
+**true** or **false**.  You can do this by enclosing the string with
+angle-brackets (`<true>`) or passing a reference to a string
+containing the constant (`\'true'`).
+
+# HOW IT WORKS
+
+Contrary to what it might seem, this module knows nothing of Apple
+Events, and only knows a sprinkling of AppleScript syntax.
+
+Instead, it actually employs a variety of magic dust to accomplish its
+tasks:
+
+- The Mac::AppleScript::Glue module translates Perl-style object/method
+calls to actual AppleScript.
+- The resulting AppleScript is executed by the Mac::AppleScript(3pm)
+module (by Dan Sugalski); any results are returned as text.
+- The AppleScript-format result data is translated into into Perl data
+structures as appropriate.
+- Perl's `$AUTOLOAD` feature ([perlobj](https://metacpan.org/pod/perlobj)) is used to translate
+statements like `$finder->insertion_location` to AppleScript.
+Method calls that aren't defined in the module itself and don't refer
+to a part of the object's data structure are delegated to a translater
+function that tries to write the method as if it was AppleScript.
+- AppleScript's concept of the "object reference" is essential to the 
+idea of having Perl objects for things other than applications.
+- The AppleScript interpreter seems somewhat lenient on the exact syntax
+of the language.  This makes it possible to write AppleScript
+statements that work even though they look weird.
+
+# METHODS
+
+There aren't any useful public methods in Mac::Application::Glue
+itself.  Instead, see [Mac::AppleScript::Glue::Application](https://metacpan.org/pod/Mac::AppleScript::Glue::Application) and
+[Mac::AppleScript::Glue::Object](https://metacpan.org/pod/Mac::AppleScript::Glue::Object).
+
+# FUNCTIONS
+
+Note that no functions are exported by default.  You can use them by
+specifying the full package name:
+
+    Mac::AppleScript::Glue::run('something');
+
+or by specifying them on the `use` statement at the top of your
+program:
+
+    use Mac::AppleScript::Glue qw(run);
+
+    run('something');
+
+- run(\[$app, \] @script)
+
+    Runs an AppleScript whose lines are in `@script`.  If `$app` is
+    specified, it should be a previously created
+    Mac::AppleScript::Application(3pm) object to which any object
+    references will "belong to."
+
+- from\_string(\[$app,\] $str)
+
+    Parses a string containing an AppleScript result, and returns the Perl
+    data structures corresponding to that result.  If `$app` is specifed
+    as a Mac::AppleScript::Glue::Application(3pm) object, any object
+    references will be "owned" by that application.
+
+- to\_string($value)
+
+    Converts a Perl data structure into an AppleScript string.  It will
+    correctly interpret Mac::AppleScript::Glue::Object(3pm) objects.
+
+- dump($obj \[, $label\])
+
+    Provides a simple dumping facility for any sort of data.  All this
+    does is call Data::Dumper(3pm)'s `Dump()` method.
+
+- dump\_pretty($object, $label \[, $fh\])
+
+    Provides a nicely-formatted view of any object.  The object can be as
+    simple as a regular scalar, or a deeply-nested tree of references.  If
+    the object is a Mac::AppleScript::Glue::Object, angle-brackets (<,
+    \>) are placed around its value.
+
+    If a string is supplied as `$label`, the output will be labeled suchly.
+
+    Output is to **STDERR** by default; you can provide an alternate
+    filehandle in `$fh` if you like.
+
+- is\_number($str)
+
+    Returns true if the given string is really a number.
+
+# DEBUGGING
+
+Various amounts of debugging can be enabled by manipulating the 
+`%Mac::AppleScript::Glue::Debug` hash.  Debugging usually involves
+printing messages to the **STDERR** file handle.
+
+To turn on a certain type of debugging, specify the key that names the
+debug option, and a value of non-zero.  For example, the following
+enables debugging of generated AppleScripts:
+
+    $Mac::AppleScript::Glue::Debug{SCRIPT} = 1;
+
+You can get a list of all the debugging keywords by examining
+`@Mac::AppleScript::Glue::DebugAll`.
+
+## Debugging keywords
+
+- SCRIPT
+
+    Show each generated AppleScript before it's sent off to the script
+    interpreter, as well as the AppleScript-formatted result string.  This
+    is useful when writing programs using Mac::AppleScript::Glue, as
+    looking at the generated AppleScript is often the best way to figure
+    out why a statement is failing.
+
+- RESULT
+
+    Show the parsed return value from the AppleScript result.  This is the
+    data you will be working with when you examine a return value from a
+    statement.
+
+- PARSE
+
+    Show the process of parsing the AppleScript result.  You probably
+    don't want to be setting this.
+
+- INIT
+
+    Show the values of Mac::AppleScript::Glue objects after all
+    initialization has been completed.  You probably don't want to be
+    setting this.
+
+- AUTOLOAD
+
+    Show attempted calls to non-existent functions and methods.  You
+    probably don't want to be setting this.
+
+# HINTS
+
+Unfortunately this package doesn't mean that you don't have to know
+AppleScript, or the class/event hierarchy of the operating system.
+Both of those can be quite inscrutable.
+
+I recommend having the Script Editor program open while writing Perl
+code.  Use the dictionary browser (File menu > Open Dictionary) to
+browse the dictionaries for the applications you're trying to control.
+If you're having trouble getting the right Perl code written, try
+writing it in AppleScript first, then translate to Perl, then let this
+module translate it back to AppleScript. ;)
+
+If you're trying to navigate through inscrutable AppleScript results,
+try using the `dump_pretty()` function (see above).
+
+Finally, turn on the **SCRIPT** and **RESULT** debugging keywords for
+the most useful yet not-too-overwhelming debug output.
+
+# BUGS AND ISSUES
+
+- It's fairly slow.  This is mostly because a compound statement (`$finder->insertion_location->name`) requires several separate
+AppleScript executions, generally one per element besides the
+application object.  It's also slow because under the hood, the Perl
+calls are translated to AppleScript, then compiled, and finally
+executed.
+- Error-handling is nearly non-existant.  If the resulting AppleScript
+is bad, or the target applications don't understand the resulting
+AppleScript, this module will force a `die()`, and you will see
+errors on **STDERR**.  If you want to trap this, use `eval`.
+- AppleScript generation is not quite right.  However, it works most of
+the time.
+
+# SEE ALSO
+
+[Mac::AppleScript](https://metacpan.org/pod/Mac::AppleScript)
+
+[Mac::AppleScript::Glue::Application](https://metacpan.org/pod/Mac::AppleScript::Glue::Application)
+
+[Mac::AppleScript::Glue::Object](https://metacpan.org/pod/Mac::AppleScript::Glue::Object)
+
+the application dictionaries, accessible through the **Script Editor**
+application (in the `/Applications/AppleScript` folder)
+
+# AUTHOR
+
+John Labovitz <johnl@johnlabovitz.com>
+
+New versions of this package are available at
+**http://www.johnlabovitz.com/hacks/**
+
+# ACKNOWLEDGEMENTS
+
+Thanks to David Bonn for the use of his mountain retreat, where most
+of this module was written over three days of peace, quiet, and light.
+
+# COPYRIGHT
+
+Copyright (c) 2002 John Labovitz. All rights reserved. This program is
+free software; you can redistribute it and/or modify it under the same
+terms as Perl itself. 
