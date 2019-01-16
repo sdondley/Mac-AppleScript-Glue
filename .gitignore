@@ -1,5 +1,5 @@
 /MANIFEST.SKIP
-/Mac-AppleScript-Glue-Application-*
+/Mac-AppleScript-Glue-*
 /tmp
 !*/tmp
 *~
