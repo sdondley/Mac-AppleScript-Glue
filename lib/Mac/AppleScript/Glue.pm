@@ -921,11 +921,15 @@ errors on B<STDERR>.  If you want to trap this, use C<eval>.
 
 =item *
 
-AppleScript generation is not quite right.  However, it works most of
+AppleScript generation is not quite right. However, it works most of
 the time.
 
 =back
 
+=head1 BUG REPORTS, CONTRIBUTIONS AND SUPPORT 
+
+Please use GitHub for all communications regarding this module: 
+L<GitHub|https://github.com/sdondley/Mac-AppleScript-Glue>
 
 =head1 SEE ALSO
 
@@ -938,24 +942,19 @@ L<Mac::AppleScript::Glue::Object>
 the application dictionaries, accessible through the B<Script Editor>
 application (in the C</Applications/AppleScript> folder)
 
-
 =head1 AUTHOR
 
-John Labovitz E<lt>johnl@johnlabovitz.comE<gt>
+Original author: John Labovitz
+Maintainer: Steve Dondley
 
-New versions of this package are available at
-B<http://www.johnlabovitz.com/hacks/>
-
-
-=head1 ACKNOWLEDGEMENTS
+=head1 ACKNOWLEDGEMENTS FROM ORIGINAL AUTHOR
 
 Thanks to David Bonn for the use of his mountain retreat, where most
 of this module was written over three days of peace, quiet, and light.
 
-
 =head1 COPYRIGHT
 
-Copyright (c) 2002 John Labovitz. All rights reserved. This program is
+Copyright (c) 2019 John Labovitz. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself. 
 
