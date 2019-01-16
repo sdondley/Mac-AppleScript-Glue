@@ -4,7 +4,7 @@ Mac::AppleScript::Glue - allows AppleScript to be written in Perl
 
 # VERSION
 
-version 0.05
+version 0.06
 
 # SYNOPSIS
 
@@ -335,8 +335,13 @@ executed.
 is bad, or the target applications don't understand the resulting
 AppleScript, this module will force a `die()`, and you will see
 errors on **STDERR**.  If you want to trap this, use `eval`.
-- AppleScript generation is not quite right.  However, it works most of
+- AppleScript generation is not quite right. However, it works most of
 the time.
+
+# BUG REPORTS, CONTRIBUTIONS AND SUPPORT 
+
+Please use GitHub for all communications regarding this module: 
+[GitHub](https://github.com/sdondley/Mac-AppleScript-Glue)
 
 # SEE ALSO
 
@@ -351,18 +356,16 @@ application (in the `/Applications/AppleScript` folder)
 
 # AUTHOR
 
-John Labovitz <johnl@johnlabovitz.com>
+Original author: John Labovitz
+Maintainer: Steve Dondley
 
-New versions of this package are available at
-**http://www.johnlabovitz.com/hacks/**
-
-# ACKNOWLEDGEMENTS
+# ACKNOWLEDGEMENTS FROM ORIGINAL AUTHOR
 
 Thanks to David Bonn for the use of his mountain retreat, where most
 of this module was written over three days of peace, quiet, and light.
 
 # COPYRIGHT
 
-Copyright (c) 2002 John Labovitz. All rights reserved. This program is
+Copyright (c) 2019 John Labovitz. All rights reserved. This program is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself. 
