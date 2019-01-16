@@ -1,6 +1,6 @@
-Revision history for {{$dist->name}}
+Revision history for Mac-AppleScript-Glue
 
-{{$NEXT}}
+0.001     2019-01-15 23:42:01-05:00 America/New_York
 
 	- module transferred to STEVIED for future maintenance
 

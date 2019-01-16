@@ -1,9 +1,13 @@
 package Mac::AppleScript::Glue::Application;
-
+$Mac::AppleScript::Glue::Application::VERSION = '0.001';
 =head1 NAME
 
 Mac::AppleScript::Glue::Application - an application to send AppleScript to
 
+
+=head1 VERSION
+
+version 0.001
 
 =head1 SYNOPSIS
 
