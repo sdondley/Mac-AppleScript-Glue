@@ -1,4 +1,5 @@
 package Mac::AppleScript::Glue;
+$VERSION = '0.03';
 
 =head1 NAME
 
@@ -238,8 +239,6 @@ require 5.6.0;
 use base qw(Exporter);
 
 our ($VERSION, $AUTOLOAD, @EXPORT, @EXPORT_OK);
-
-$VERSION = '0.03';
 
 BEGIN {
     @EXPORT = qw();
